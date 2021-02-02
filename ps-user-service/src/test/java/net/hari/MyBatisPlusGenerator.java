@@ -1,4 +1,4 @@
-package net.hari.db;
+package net.hari;
 
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -23,10 +23,10 @@ public class MyBatisPlusGenerator {
         // 是否支持AR模式
         config.setActiveRecord(true)
                 // 作者
-                .setAuthor("二当家小D")
+                .setAuthor("hariC")
                 // 生成路径，最好使用绝对路径，window路径是不一样的
                 //TODO  TODO  TODO  TODO
-                .setOutputDir("/Users/xdclass/Desktop/demo/src/main/java")
+                .setOutputDir("D:\\JavaSpace\\mybatis\\java")
                 // 文件覆盖
                 .setFileOverride(true)
                 // 主键策略
@@ -54,9 +54,9 @@ public class MyBatisPlusGenerator {
         dsConfig.setDbType(DbType.MYSQL)
                 .setDriverName("com.mysql.cj.jdbc.Driver")
                 //TODO  TODO  TODO  TODO
-                .setUrl("jdbc:mysql://127.0.0.1:3306/xdclass_user?useSSL=false")
+                .setUrl("jdbc:mysql://127.0.0.1:3306/paas_user?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai")
                 .setUsername("root")
-                .setPassword("xdclass.net");
+                .setPassword("LLkk1010");
 
         //3. 策略配置globalConfiguration中
         StrategyConfig stConfig = new StrategyConfig();
@@ -78,7 +78,7 @@ public class MyBatisPlusGenerator {
 
         //4. 包名策略配置
         PackageConfig pkConfig = new PackageConfig();
-        pkConfig.setParent("net.xdclass")
+        pkConfig.setParent("net.hari")
                 .setMapper("mapper")
                 .setService("service")
                 .setController("controller")
@@ -94,6 +94,6 @@ public class MyBatisPlusGenerator {
 
         //6. 执行操作
         ag.execute();
-        System.out.println("======= 小滴课堂 Done 相关代码生成完毕  ========");
+        System.out.println("======= paas-shop Done 相关代码生成完毕  ========");
     }
 }
