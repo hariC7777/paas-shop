@@ -5,14 +5,13 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import net.hari.enums.BizCodeEnum;
+import net.hari.request.UserLoginRequest;
 import net.hari.service.FileService;
+import net.hari.service.UserService;
 import net.hari.util.JsonData;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -25,12 +24,14 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Api(tags = "用户模块")
 @RestController
-@RequestMapping("/user")
+@RequestMapping("api/user")
 public class UserController {
 
     @Autowired
     private FileService fileService;
 
+    @Autowired
+    private UserService userService;
 
     /**
      * 上传用户头像
@@ -48,6 +49,18 @@ public class UserController {
 
         return result != null?JsonData.buildSuccess(result):JsonData.buildResult(BizCodeEnum.FILE_UPLOAD_USER_IMG_FAIL);
 
+    }
+
+    /**
+     * 登录
+     * @param loginRequest
+     * @return
+     */
+    @PostMapping("login")
+    public JsonData register(@RequestBody UserLoginRequest loginRequest){
+
+        JsonData jsonData = userService.login(loginRequest);
+        return jsonData;
     }
 
 }
