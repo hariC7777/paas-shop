@@ -49,8 +49,8 @@ public class SwaggerConfiguration {
                 .build()
                 // 新版SwaggerUI3.0
                 .globalRequestParameters(globalReqeustParameters())
-                .globalResponses(HttpMethod.GET,getGlabalResponseMessage())
-                .globalResponses(HttpMethod.POST,getGlabalResponseMessage());
+                .globalResponses(HttpMethod.GET, getGlobalResponseMessage())
+                .globalResponses(HttpMethod.POST, getGlobalResponseMessage());
 
     }
 
@@ -121,7 +121,7 @@ public class SwaggerConfiguration {
     /**
      * 生成通用的响应信息
      */
-    private List<Response> getGlabalResponseMessage() {
+    private List<Response> getGlobalResponseMessage() {
 
         List<Response> list = new ArrayList<>();
         list.add(new ResponseBuilder()
