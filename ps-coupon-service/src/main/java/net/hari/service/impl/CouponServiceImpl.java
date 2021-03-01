@@ -19,9 +19,13 @@ import net.hari.service.CouponService;
 import net.hari.util.CommonUtil;
 import net.hari.util.JsonData;
 import net.hari.vo.CouponVO;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -37,6 +41,9 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class CouponServiceImpl implements CouponService {
+
+    @Autowired
+    private RedissonClient redissonClient;
 
     @Autowired
     private CouponMapper couponMapper;
@@ -79,41 +86,72 @@ public class CouponServiceImpl implements CouponService {
      * @param category
      * @return
      */
+    @Transactional(rollbackFor=Exception.class,propagation= Propagation.REQUIRED)
     @Override
     public JsonData addCoupon(long couponId, CouponCategoryEnum category) {
 
         LoginUser loginUser = LoginInterceptor.threadLocal.get();
 
-        CouponDO couponDO = couponMapper.selectOne(new QueryWrapper<CouponDO>()
-                .eq("id", couponId)
-                .eq("category", category.name()));
+        String lockKey = "lock:coupon:"+couponId;
+        RLock rLock = redissonClient.getLock(lockKey);
 
-        //优惠券是否可以领取
-        this.checkCoupon(couponDO, loginUser.getId());
+        //多个线程进入，会阻塞等待释放锁，默认30秒，然后有watch dog自动续期
+        rLock.lock();
 
-        //构建领劵记录
-        CouponRecordDO couponRecordDO = new CouponRecordDO();
-        BeanUtils.copyProperties(couponDO, couponRecordDO);
-        couponRecordDO.setCreateTime(new Date());
-        couponRecordDO.setUseState(CouponStateEnum.NEW.name());
-        couponRecordDO.setUserId(loginUser.getId());
-        couponRecordDO.setUserName(loginUser.getName());
-        couponRecordDO.setCouponId(couponId);
-        couponRecordDO.setId(null);
+        //加锁10秒钟过期，没有watch dog功能，无法自动续期
+        //rLock.lock(10,TimeUnit.SECONDS);
 
-        //扣减库存  TODO
-        int rows = couponMapper.reduceStock(couponId);
 
-        if (rows == 1) {
-            //库存扣减成功才保存记录
-            couponRecordMapper.insert(couponRecordDO);
+        log.info("领劵接口加锁成功:{}",Thread.currentThread().getId());
 
-        } else {
-            log.warn("发放优惠券失败:{},用户:{}", couponDO, loginUser);
-            throw new BizException(BizCodeEnum.COUPON_NO_STOCK);
+//        try {
+//            TimeUnit.SECONDS.sleep(90);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+
+        try{
+
+            CouponDO couponDO = couponMapper.selectOne(new QueryWrapper<CouponDO>()
+                    .eq("id", couponId)
+                    .eq("category", category.name()));
+
+            //优惠券是否可以领取
+            this.checkCoupon(couponDO, loginUser.getId());
+
+            //构建领劵记录
+            CouponRecordDO couponRecordDO = new CouponRecordDO();
+            BeanUtils.copyProperties(couponDO, couponRecordDO);
+            couponRecordDO.setCreateTime(new Date());
+            couponRecordDO.setUseState(CouponStateEnum.NEW.name());
+            couponRecordDO.setUserId(loginUser.getId());
+            couponRecordDO.setUserName(loginUser.getName());
+            couponRecordDO.setCouponId(couponId);
+            couponRecordDO.setId(null);
+
+            //扣减库存
+            int rows = couponMapper.reduceStock(couponId);
+
+            //int flag = 1/0;
+
+            if (rows == 1) {
+                //库存扣减成功才保存记录
+                couponRecordMapper.insert(couponRecordDO);
+
+            } else {
+                log.warn("发放优惠券失败:{},用户:{}", couponDO, loginUser);
+
+                throw new BizException(BizCodeEnum.COUPON_NO_STOCK);
+            }
+
+        } finally {
+            rLock.unlock();
+            log.info("解锁成功");
         }
+
         return JsonData.buildSuccess();
     }
+
 
 
     /**
