@@ -1,6 +1,7 @@
 package net.hari.service;
 
 import net.hari.enums.CouponCategoryEnum;
+import net.hari.request.NewUserCouponRequest;
 import net.hari.util.JsonData;
 
 import java.util.Map;
@@ -27,5 +28,12 @@ public interface CouponService {
      * @return
      */
     JsonData addCoupon(long couponId, CouponCategoryEnum category);
+
+    /**
+     * 新用户注册发放优惠券
+     * @param newUserCouponRequest
+     * @return
+     */
+    JsonData initNewUserCoupon(NewUserCouponRequest newUserCouponRequest);
 
 }
